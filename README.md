@@ -6,49 +6,229 @@ This repository contains the microservices architecture with the following compo
 
 ```
 Root Directory/
-├── documentation-and-swagger/    # API documentation hub
-│   ├── swagger-server.js         # Main documentation server
-│   ├── package.json              # Hub dependencies
-│   ├── docs/                     # API specifications
-│   │   └── chats-service-api.yaml # Chat service OpenAPI spec
-│   └── validate-docs.sh          # Documentation validation script
-├── chats-service/                # Chat microservice
-│   ├── src/                      # Source code
-│   ├── test/                     # Tests
-│   ├── package.json              # Service dependencies
-│   └── README.md                 # Service documentation
-└── README.md                     # This file
+├── 🎨 chat-frontend/             # React TypeScript Frontend (Port 3000/3003)
+│   ├── src/
+│   │   ├── components/           # React components (ChatInterface, SessionList, etc.)
+│   │   ├── context/              # State management (ChatContext, UserContext, etc.)
+│   │   ├── services/             # API integration layer
+│   │   └── types/                # TypeScript type definitions
+│   ├── public/                   # Static assets
+│   ├── build/                    # Production build output
+│   ├── Dockerfile                # Container configuration
+│   ├── nginx.conf                # Production web server config
+│   └── package.json              # Frontend dependencies
+│
+├── 🚀 chats-service/             # Node.js TypeScript Backend (Port 3002)
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── controllers/      # REST API endpoints (ChatsController)
+│   │   │   ├── services/         # Business logic (ChatService, OpenAIService)
+│   │   │   ├── models/           # MongoDB schemas with encryption
+│   │   │   ├── middlewares/      # Auth, validation, error handling
+│   │   │   ├── dto/              # Request/response validation
+│   │   │   └── errors/           # Custom error system
+│   │   ├── loaders/              # App initialization (DB, Express, IoC)
+│   │   └── lib/                  # Utilities (Logger, Environment)
+│   ├── test/                     # Unit tests with Jest
+│   ├── Dockerfile                # Container configuration
+│   └── package.json              # Backend dependencies
+│
+├── 📚 documentation-and-swagger/ # API Documentation Hub (Port 3001)
+│   ├── docs/
+│   │   └── chats-service-api.yaml # OpenAPI 3.0 specifications
+│   ├── swagger-server.js         # Express server for Swagger UI
+│   ├── api-tester.html          # Custom API testing interface
+│   ├── Dockerfile                # Container configuration
+│   └── package.json              # Documentation dependencies
+│
+├── 🧪 automation/                # Playwright Test Suite
+│   ├── tests/                    # E2E API tests (86.7% coverage)
+│   │   ├── authentication.spec.ts
+│   │   ├── sessions.spec.ts
+│   │   ├── messages.spec.ts
+│   │   ├── smart-chat-negative.spec.ts
+│   │   ├── user-isolation.spec.ts
+│   │   └── setup/                # Test configuration
+│   ├── playwright-report/        # HTML test results
+│   ├── playwright.config.ts      # Test configuration
+│   └── package.json              # Test dependencies
+│
+├── 🐳 Docker Infrastructure
+│   ├── docker-compose.yml        # Multi-service orchestration
+│   ├── docker-compose-local-mongo.yml # Local MongoDB setup
+│   └── .dockerignore             # Container build exclusions
+│
+├── 🔧 DevOps & Scripts
+│   ├── .github/                  # GitHub Actions & Copilot instructions
+│   ├── quick-docker-test.sh      # Rapid testing script
+│   ├── run-automation-tests.sh   # Test execution script
+│   └── package.json              # Root project configuration
+│
+└── 📖 Documentation
+    ├── README.md                 # This comprehensive guide
+    ├── .gitignore                # Git exclusions
+    └── Various service READMEs   # Service-specific documentation
 ```
 
-## � Services
+### 🌐 Service Architecture
 
-### 1. Chat Storage Service (Port 3002) ✅ Available
+**Frontend Layer** (React + TypeScript)
+- Modern React 19 with functional components and hooks
+- Tailwind CSS for responsive styling
+- Context API for state management
+- Real-time chat interface with AI integration
 
-- **Location**: `/chats-service/`
-- **Description**: RAG Chat Storage microservice for managing chat sessions and messages
+**Backend Layer** (Node.js + TypeScript)
+- RESTful API with routing-controllers
+- MongoDB with Mongoose ODM
+- Dependency injection with TypeDI
+- Custom error handling and logging system
+
+**AI Integration Layer**
+- OpenAI GPT integration for smart responses
+- Conversation context management
+- Custom API key support per request
+- Fallback-free real AI responses
+
+**Infrastructure Layer**
+- Docker containers for all services
+- MongoDB database with authentication
+- Nginx for frontend serving
+- Health checks and monitoring
+
+## 🎯 Services
+
+### 1. 🎨 Chat Frontend (Port 3000/3003) ✅ Production Ready
+
+- **Location**: `/chat-frontend/`
+- **Description**: Modern React TypeScript frontend with real-time chat interface
 
 **Key Features:**
 
-- Create/rename/delete chat sessions
-- Mark sessions as favorites
-- Add messages with automatic encryption
-- Retrieve paginated message history
-- API key authentication
-- Rate limiting (60 requests/minute)
+- **User Management**: Multi-user support with isolated sessions
+- **Chat Interface**: Real-time messaging with smart AI responses  
+- **Session Management**: Create, rename, delete, and favorite chat sessions
+- **API Key Management**: Dual key management (Service Auth + OpenAI)
+- **Responsive Design**: Mobile-first design with Tailwind CSS
+- **Error Handling**: Comprehensive error messages and user feedback
+- **State Management**: React Context API for global state
 
-### 2. User Management Service (Port 3004) 🚧 Coming Soon
+**Technology Stack:**
+- React 19 + TypeScript
+- Tailwind CSS for styling
+- Context API for state management
+- Axios for API communication
+- Docker containerization with Nginx
 
-- **Location**: `/user-service/` (planned)
-- **Description**: Comprehensive user management system
+### 2. 🚀 Chat Service (Port 3002) ✅ Production Ready
 
-**Planned Features:**
+- **Location**: `/chats-service/`
+- **Description**: Robust Node.js TypeScript backend with AI integration
 
-- User registration and profiles
-- Account management
-- Preference settings
-- Data export/import
+**Key Features:**
 
-## 📖 Documentation Hub
+- **Session Management**: Create, rename, delete chat sessions with user isolation
+- **Message Handling**: Add/retrieve messages with automatic encryption
+- **AI Integration**: Real OpenAI GPT responses with conversation context
+- **Authentication**: API key protection with clear error messages
+- **Rate Limiting**: 60 requests/minute with proper throttling
+- **User Isolation**: Complete data separation between users
+- **Encryption**: Sensitive data encryption at rest
+- **Comprehensive Logging**: Winston-based logging with request tracing
+
+**Technology Stack:**
+- Node.js + TypeScript
+- Express with routing-controllers
+- MongoDB with Mongoose ODM
+- TypeDI for dependency injection
+- OpenAI API integration
+- Docker containerization
+
+### 3. � Documentation Hub (Port 3001) ✅ Available
+
+- **Location**: `/documentation-and-swagger/`
+- **Description**: Centralized API documentation with dual testing interfaces
+
+**Key Features:**
+
+- **Swagger UI**: Interactive API documentation
+- **Custom API Tester**: Simplified testing interface
+- **Service Health Monitoring**: Real-time service status
+- **Pre-configured Authentication**: Ready-to-use API testing
+- **Responsive Design**: Works on all devices
+
+### 4. 🧪 Automation Testing Suite ✅ Comprehensive Coverage
+
+- **Location**: `/automation/`
+- **Description**: Playwright-based end-to-end testing suite
+
+**Test Coverage (86.7% Success Rate):**
+
+- **Authentication Tests**: API key validation and user isolation
+- **Session Management**: CRUD operations and favorites
+- **Message Handling**: Creation, retrieval, and pagination
+- **Smart Chat**: AI integration and error scenarios
+- **Rate Limiting**: Throttling and protection mechanisms
+- **Error Handling**: Comprehensive error response validation
+- **User Isolation**: Multi-user data separation
+
+**Technology Stack:**
+- Playwright for E2E testing
+- TypeScript test specifications
+- HTML reporting with detailed results
+- CI/CD ready test automation
+
+## � Docker Deployment
+
+### Quick Start (All Services)
+
+```bash
+# Start all services with Docker Compose
+docker-compose up -d
+
+# Check service status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
+
+### Service Ports
+
+| Service | Port | URL | Status |
+|---------|------|-----|--------|
+| **Frontend** | 3003 | http://localhost:3003 | ✅ Ready |
+| **Backend API** | 3002 | http://localhost:3002/chats-service/api | ✅ Ready |
+| **Documentation** | 3001 | http://localhost:3001 | ✅ Ready |
+| **MongoDB** | 27017 | mongodb://localhost:27017 | ✅ Ready |
+
+### Environment Configuration
+
+Each service includes comprehensive environment configuration:
+
+- **Frontend**: React app settings, API URLs, feature flags
+- **Backend**: Database URLs, API keys, security settings
+- **Documentation**: Port configuration and service discovery
+- **Database**: Authentication, storage, and replication settings
+
+### Health Monitoring
+
+All services include health checks:
+
+```bash
+# Check all service health
+curl http://localhost:3001/health        # Documentation Hub
+curl http://localhost:3002/chats-service/api/v1/chats \
+  -H "x-api-key: dev-api-key-2024" \
+  -H "x-user-id: health-check" \
+  -H "Unique-Reference-Code: health-123"  # Chat Service
+curl http://localhost:3003               # Frontend
+```
+
+## �📖 Documentation Hub
 
 A centralized documentation hub with **dual testing interfaces** for all microservices.
 
