@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Service API Tester</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background: #f8fafc;
+        color: #334155;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.5rem 0;
+      }
+
+      .subtitle {
+        font-size: 1.1rem;
+        color: #64748b;
+        margin: 0;
+      }
+
+      .nav-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+      }
+
+      .nav-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        background: white;
+        color: #475569;
+        text-decoration: none;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .nav-btn:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+      }
+
+      .nav-btn.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+      }
+
+      .api-key-notice {
+        background: #fef3c7;
+        border: 1px solid #fbbf24;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .api-key-notice h3 {
+        margin: 0 0 1rem 0;
+        color: #92400e;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+
+      .api-key-value {
+        background: #1e293b;
+        color: #f1f5f9;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+        font-size: 0.95rem;
+        margin: 1rem 0;
+        word-break: break-all;
+        border: 2px dashed #475569;
+      }
+
+      .endpoint-group {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      .endpoint-title {
+        color: #1e293b;
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .method-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .method-post {
+        background: #059669;
+      }
+      .method-get {
+        background: #0ea5e9;
+      }
+      .method-patch {
+        background: #d97706;
+      }
+      .method-delete {
+        background: #dc2626;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.95rem;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+        font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+      }
+
+      button {
+        background: #3b82f6;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      button:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .response {
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+      }
+
+      .response.success {
+        border-color: #10b981;
+        background: #ecfdf5;
+      }
+
+      .response.error {
+        border-color: #ef4444;
+        background: #fef2f2;
+      }
+
+      .response-header {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #374151;
+        font-size: 0.95rem;
+      }
+
+      pre {
+        background: #1e293b;
+        color: #f1f5f9;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .response.success pre {
+        background: #064e3b;
+        color: #a7f3d0;
+      }
+
+      .response.error pre {
+        background: #7f1d1d;
+        color: #fca5a5;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .nav-buttons {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .nav-btn {
+          width: 100%;
+          max-width: 300px;
+          justify-content: center;
+        }
+
+        .endpoint-title {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.5rem;
+        }
+      }
+
+      /* Smart Chat specific styles */
+      .smart-chat-examples {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+      }
+
+      .example-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+      }
+
+      .example-btn {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .example-btn:hover {
+        background: #e2e8f0;
+        border-color: #94a3b8;
+        transform: translateY(-1px);
+      }
+
+      .example-btn:active {
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>API Tester</h1>
+        <p class="subtitle">
+          Simple and elegant interface for testing the Chat Service API
+        </p>
+      </header>
+
+      <div class="nav-buttons">
+        <a href="/" class="nav-btn">🏠 Documentation Hub</a>
+        <a href="/docs" class="nav-btn">📚 Swagger UI</a>
+        <a href="/api-tester" class="nav-btn active">🧪 Custom Tester</a>
+      </div>
+
+      <div class="api-key-notice">
+        <h3>🔑 Authentication Required</h3>
+        <p>
+          All APIs require the <code>x-api-key</code> header. Use the example
+          key below:
+        </p>
+        <div class="api-key-value">test-api-key-12345</div>
+        <p><strong>Required Headers:</strong></p>
+        <ul>
+          <li><code>x-api-key: test-api-key-12345</code></li>
+          <li>
+            <code>Unique-Reference-Code: REQ-123456789</code> (any unique
+            string)
+          </li>
+        </ul>
+      </div>
+
+      <!-- Global Settings -->
+      <div class="endpoint-group">
+        <div class="endpoint-title">🔑 Authentication & Headers</div>
+        <div class="form-group">
+          <label>API Key:</label>
+          <input
+            type="text"
+            id="apiKey"
+            value="test-api-key-12345"
+            placeholder="Enter API key"
+          />
+        </div>
+        <div class="form-group">
+          <label>Unique Reference Code:</label>
+          <input
+            type="text"
+            id="urc"
+            value="REQ-123456789"
+            placeholder="Enter URC"
+          />
+        </div>
+      </div>
+
+      <!-- Create Session -->
+      <div class="endpoint-group">
+        <div class="endpoint-title">
+          <span class="method-tag method-post">POST</span>
+          /chats - Create Session
+        </div>
+        <div class="form-group">
+          <label>Request Body (JSON):</label>
+          <textarea id="createSessionBody">
+{"title": "Planning my vacation"}</textarea
+          >
+        </div>
+        <button onclick="testCreateSession()">Create Session</button>
+        <div id="createSessionResponse"></div>
+      </div>
+
+      <!-- Get Messages -->
+      <div class="endpoint-group">
+        <div class="endpoint-title">
+          <span class="method-tag method-get">GET</span>
+          /chats/{id}/messages - Get Messages
+        </div>
+        <div class="form-group">
+          <label>Session ID:</label>
+          <input
+            type="text"
+            id="sessionId"
+            placeholder="Enter session ID from create response"
+          />
+        </div>
+        <div class="form-group">
+          <label>Limit (optional):</label>
+          <input type="number" id="limit" value="50" min="1" max="100" />
+        </div>
+        <div class="form-group">
+          <label>Skip (optional):</label>
+          <input type="number" id="skip" value="0" min="0" />
+        </div>
+        <button onclick="testGetMessages()">Get Messages</button>
+        <div id="getMessagesResponse"></div>
+      </div>
+
+      <!-- Add Message -->
+      <div class="endpoint-group">
+        <div class="endpoint-title">
+          <span class="method-tag method-post">POST</span>
+          /chats/{id}/messages - Add Message
+        </div>
+        <div class="form-group">
+          <label>Session ID:</label>
+          <input
+            type="text"
+            id="messageSessionId"
+            placeholder="Enter session ID"
+          />
+        </div>
+        <div class="form-group">
+          <label>Request Body (JSON):</label>
+          <textarea id="addMessageBody">
+{"sender": "user", "content": "Hello, this is my first message!", "context": {"source": "test"}}</textarea
+          >
+        </div>
+        <button onclick="testAddMessage()">Add Message</button>
+        <div id="addMessageResponse"></div>
+      </div>
+
+      <!-- Smart Chat -->
+      <div class="endpoint-group">
+        <div class="endpoint-title">
+          <span class="method-tag method-post">POST</span>
+          /chats/{id}/smart-chat - Smart Chat with AI ✨
+        </div>
+        <div class="form-group">
+          <label>Session ID:</label>
+          <input
+            type="text"
+            id="smartChatSessionId"
+            placeholder="Enter session ID"
+          />
+        </div>
+        <div class="form-group">
+          <label>Request Body (JSON):</label>
+          <textarea id="smartChatBody">
+{"message": "Hello! Can you help me plan a vacation to Paris for 5 days?", "context": {"duration": "5 days", "interests": ["museums", "food", "architecture"]}}</textarea
+          >
+        </div>
+        <div class="smart-chat-examples">
+          <p><strong>💡 Example Messages:</strong></p>
+          <div class="example-buttons">
+            <button
+              type="button"
+              onclick="setSmartChatExample('weather')"
+              class="example-btn"
+            >
+              Weather Question
+            </button>
+            <button
+              type="button"
+              onclick="setSmartChatExample('travel')"
+              class="example-btn"
+            >
+              Travel Planning
+            </button>
+            <button
+              type="button"
+              onclick="setSmartChatExample('general')"
+              class="example-btn"
+            >
+              General Question
+            </button>
+            <button
+              type="button"
+              onclick="setSmartChatExample('followup')"
+              class="example-btn"
+            >
+              Follow-up
+            </button>
+          </div>
+        </div>
+        <button onclick="testSmartChat()">💬 Send Smart Chat</button>
+        <div id="smartChatResponse"></div>
+      </div>
+
+      <!-- Health Check -->
+      <div class="endpoint-group">
+        <div class="endpoint-title">
+          <span class="method-tag method-get">GET</span>
+          /chats/health - Health Check
+        </div>
+        <button onclick="testHealth()">Check Health</button>
+        <div id="healthResponse"></div>
+      </div>
+    </div>
+
+    <script>
+      const BASE_URL = "http://localhost:3002/chats-service/api/v1";
+
+      async function makeRequest(method, endpoint, body = null) {
+        const apiKey = document.getElementById("apiKey").value;
+        const urc = document.getElementById("urc").value;
+
+        const headers = {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "Unique-Reference-Code": urc,
+        };
+
+        const config = {
+          method,
+          headers,
+          mode: "cors",
+        };
+
+        if (body) {
+          config.body = JSON.stringify(body);
+        }
+
+        try {
+          const response = await fetch(`${BASE_URL}${endpoint}`, config);
+          const responseData = await response.text();
+
+          return {
+            ok: response.ok,
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries()),
+            data: responseData,
+          };
+        } catch (error) {
+          return {
+            ok: false,
+            status: 0,
+            statusText: "Network Error",
+            error: error.message,
+            data: null,
+          };
+        }
+      }
+
+      function displayResponse(elementId, response) {
+        const element = document.getElementById(elementId);
+        const isSuccess = response.ok;
+
+        let responseBody;
+        try {
+          responseBody = JSON.parse(response.data);
+          responseBody = JSON.stringify(responseBody, null, 2);
+        } catch {
+          responseBody = response.data;
+        }
+
+        element.innerHTML = `
+                <div class="response ${isSuccess ? "success" : "error"}">
+                    <div class="response-header">
+                        ${response.status} ${response.statusText}
+                    </div>
+                    <pre>${responseBody}</pre>
+                    ${
+                      response.error
+                        ? `<p><strong>Error:</strong> ${response.error}</p>`
+                        : ""
+                    }
+                </div>
+            `;
+      }
+
+      async function testCreateSession() {
+        const body = JSON.parse(
+          document.getElementById("createSessionBody").value
+        );
+        const response = await makeRequest("POST", "/chats", body);
+        displayResponse("createSessionResponse", response);
+
+        // Auto-fill session ID for other endpoints
+        if (response.ok) {
+          try {
+            const data = JSON.parse(response.data);
+            if (data.id) {
+              document.getElementById("sessionId").value = data.id;
+              document.getElementById("messageSessionId").value = data.id;
+            }
+          } catch (e) {}
+        }
+      }
+
+      async function testGetMessages() {
+        const sessionId = document.getElementById("sessionId").value;
+        const limit = document.getElementById("limit").value;
+        const skip = document.getElementById("skip").value;
+
+        if (!sessionId) {
+          alert("Please enter a session ID");
+          return;
+        }
+
+        const queryParams = new URLSearchParams();
+        if (limit) queryParams.append("limit", limit);
+        if (skip) queryParams.append("skip", skip);
+
+        const endpoint = `/chats/${sessionId}/messages${
+          queryParams.toString() ? "?" + queryParams.toString() : ""
+        }`;
+        const response = await makeRequest("GET", endpoint);
+        displayResponse("getMessagesResponse", response);
+      }
+
+      async function testAddMessage() {
+        const sessionId = document.getElementById("messageSessionId").value;
+
+        if (!sessionId) {
+          alert("Please enter a session ID");
+          return;
+        }
+
+        const body = JSON.parse(
+          document.getElementById("addMessageBody").value
+        );
+        const response = await makeRequest(
+          "POST",
+          `/chats/${sessionId}/messages`,
+          body
+        );
+        displayResponse("addMessageResponse", response);
+      }
+
+      async function testSmartChat() {
+        const sessionId = document.getElementById("smartChatSessionId").value;
+
+        if (!sessionId) {
+          alert("Please enter a session ID");
+          return;
+        }
+
+        const body = JSON.parse(document.getElementById("smartChatBody").value);
+        const response = await makeRequest(
+          "POST",
+          `/chats/${sessionId}/smart-chat`,
+          body
+        );
+        displayResponse("smartChatResponse", response);
+      }
+
+      function setSmartChatExample(type) {
+        const examples = {
+          weather: {
+            message: "What's the weather like today?",
+            context: {
+              location: "general",
+              request_type: "weather_info",
+            },
+          },
+          travel: {
+            message:
+              "Can you help me plan a vacation to Paris for 5 days? I'm interested in museums, good food, and beautiful architecture.",
+            context: {
+              destination: "Paris",
+              duration: "5 days",
+              interests: ["museums", "food", "architecture"],
+              type: "travel_planning",
+            },
+          },
+          general: {
+            message:
+              "Can you explain the difference between REST and GraphQL APIs?",
+            context: {
+              topic: "technology",
+              complexity: "intermediate",
+            },
+          },
+          followup: {
+            message:
+              "That sounds great! What about recommendations for dinner restaurants?",
+            context: {
+              type: "follow_up",
+              previous_topic: "travel_planning",
+            },
+          },
+        };
+
+        const example = examples[type];
+        if (example) {
+          document.getElementById("smartChatBody").value = JSON.stringify(
+            example,
+            null,
+            2
+          );
+        }
+      }
+
+      async function testHealth() {
+        const response = await makeRequest("GET", "/health");
+        displayResponse("healthResponse", response);
+      }
+    </script>
+  </body>
+</html>

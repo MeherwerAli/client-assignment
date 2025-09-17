@@ -1,0 +1,29 @@
+{
+  "name": "chat-service-automation",
+  "version": "1.0.0",
+  "description": "Playwright automation tests for Chat Service APIs",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:ui": "playwright test --ui",
+    "test:docker": "docker-compose -f ../docker-compose.yml up -d && npm run test && docker-compose -f ../docker-compose.yml down"
+  },
+  "keywords": [
+    "playwright",
+    "api",
+    "testing",
+    "automation",
+    "chat"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "axios": "^1.12.2",
+    "dotenv": "^17.2.2",
+    "playwright": "^1.55.0"
+  }
+}

@@ -1,0 +1,138 @@
+version: "3.8"
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: chat-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: chat_storage
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Chat Service
+  chat-service:
+    build:
+      context: ./chats-service
+      dockerfile: Dockerfile
+    container_name: chat-service
+    restart: unless-stopped
+    env_file:
+      - ./chats-service/.env
+    environment:
+      # Override specific container settings
+      NODE_ENV: production
+      APP_HOST: 0.0.0.0
+      APP_PORT: 3000
+      MONGO_URL: mongodb://admin:password123@mongodb:27017/chats_db?authSource=admin
+      API_KEY: dev-api-key-2024
+    ports:
+      - "3002:3000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - chat-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3002/v1/chats/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Documentation Hub
+  documentation-hub:
+    build:
+      context: ./documentation-and-swagger
+      dockerfile: Dockerfile
+    container_name: documentation-hub
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    networks:
+      - chat-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Chat Frontend
+  chat-frontend:
+    build:
+      context: ./chat-frontend
+      dockerfile: Dockerfile
+    container_name: chat-frontend
+    restart: unless-stopped
+    environment:
+      # API Configuration
+      REACT_APP_API_BASE_URL: http://localhost:3002/chats-service/api/v1
+      REACT_APP_API_KEY: dev-api-key-2024
+      # App Configuration
+      REACT_APP_NAME: Smart Chat
+      REACT_APP_VERSION: 1.0.0
+      # Feature Flags
+      REACT_APP_ENABLE_SMART_CHAT: true
+      REACT_APP_AUTO_SAVE: true
+      REACT_APP_ENABLE_FAVORITES: true
+    ports:
+      - "3003:3000"
+    depends_on:
+      - chat-service
+    networks:
+      - chat-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  chat-network:
+    driver: bridge

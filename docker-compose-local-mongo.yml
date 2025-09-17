@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  # Chat Service (using local MongoDB)
+  chat-service:
+    build:
+      context: ./chats-service
+      dockerfile: Dockerfile
+    container_name: chat-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      # Use host.docker.internal to connect to local MongoDB
+      MONGODB_URL: mongodb://host.docker.internal:27017/chat_storage_test
+      API_KEY: test-api-key-12345
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX: 100
+      CORS_ORIGIN: "*"
+      ENCRYPTION_KEY: your-32-character-encryption-key-here
+    ports:
+      - "3002:3002"
+    networks:
+      - chat-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3002/chats-service/api/v1/chats/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Documentation Hub
+  documentation-hub:
+    build:
+      context: ./documentation-and-swagger
+      dockerfile: Dockerfile
+    container_name: documentation-hub
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    networks:
+      - chat-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+networks:
+  chat-network:
+    driver: bridge
