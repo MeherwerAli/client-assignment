@@ -21,7 +21,7 @@ sleep 15
 # Quick health check
 echo "🔍 Performing health check..."
 if curl -s -f http://localhost:3002/chats-service/api/v1/health \
-   -H "x-api-key: test-api-key-12345" \
+   -H "x-api-key: dev-api-key-2024" \
    -H "Unique-Reference-Code: docker-test"; then
     echo "✅ Chat service is healthy!"
 else

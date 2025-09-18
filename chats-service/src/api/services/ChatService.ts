@@ -1,5 +1,4 @@
 import { Service } from 'typedi';
-import { decryptValue } from '../../lib/env/helpers';
 // import { Logger } from '../../lib/logger'; // Temporarily commented for testing
 import { IRequestHeaders } from '../Interface/IRequestHeaders';
 import { SmartChatResponseDto } from '../dto/SmartChatDto';
@@ -41,12 +40,17 @@ export class ChatService {
     // this.log.info(logMessage); // Temporarily commented for testing
 
     try {
-      const session = await ChatSession.findOneAndUpdate({ _id: sessionId, userId: userId }, { title }, { new: true });
+      // Find the session first
+      const session = await ChatSession.findOne({ _id: sessionId, userId: userId });
 
       if (!session) {
         // this.log.warn(`Session not found for update: sessionId=${sessionId}, userId=${userId}`); // Temporarily commented for testing
         throw new CredError(HTTPCODES.NOT_FOUND, CODES.NotFound);
       }
+
+      // Update the title and save (this will trigger pre-save hooks for encryption)
+      session.title = title;
+      await session.save();
 
       return session.toJSON();
     } catch (error) {
@@ -153,12 +157,8 @@ export class ChatService {
         lastMessageAt: message.createdAt
       });
 
-      // Return message with original content for the response
-      // (the database stores encrypted, but we return unencrypted for API response)
-      const messageResponse = message.toJSON();
-      messageResponse.content = content; // Return original unencrypted content
-
-      return messageResponse;
+      // Return message (toJSON will automatically decrypt the content)
+      return message.toJSON();
     } catch (error) {
       // If it's already a CredError, re-throw it
       if (error instanceof CredError || (error as any).httpCode) {
@@ -194,22 +194,8 @@ export class ChatService {
         .limit(safeLimit)
         .exec();
 
-      // Manually decrypt content for all retrieved messages
-      const decryptedMessages = await Promise.all(
-        messages.map(async msg => {
-          const msgJson = msg.toJSON();
-          if (msgJson.content) {
-            try {
-              msgJson.content = await decryptValue(msgJson.content);
-            } catch (error) {
-              // this.log.warn('Failed to decrypt message content during retrieval'); // Temporarily commented for testing
-            }
-          }
-          return msgJson;
-        })
-      );
-
-      return decryptedMessages;
+      // Return messages (toJSON will automatically decrypt the content)
+      return messages.map(msg => msg.toJSON());
     } catch (error) {
       // If it's already a CredError, re-throw it
       if (error instanceof CredError || (error as any).httpCode) {
@@ -245,13 +231,16 @@ export class ChatService {
       // Get conversation history (last 20 messages for context)
       const conversationHistory = await ChatMessage.find({ sessionId }).sort({ createdAt: 1 }).limit(20).exec();
 
-      // Format conversation history for OpenAI
+      // Format conversation history for OpenAI - use toJSON() to ensure decryption
       const messages = this.openAIService.buildConversationContext(
-        conversationHistory.map(msg => ({
-          sender: msg.sender,
-          content: msg.content,
-          createdAt: msg.createdAt
-        }))
+        conversationHistory.map(msg => {
+          const msgJson = msg.toJSON(); // This ensures content is decrypted
+          return {
+            sender: msgJson.sender,
+            content: msgJson.content,
+            createdAt: msgJson.createdAt
+          };
+        })
       );
 
       // Add the new user message to the conversation
@@ -290,17 +279,20 @@ export class ChatService {
       // Get updated conversation length
       const totalMessages = await ChatMessage.countDocuments({ sessionId });
 
-      // Content is now stored as plain text (encryption disabled for demo)
+      // Use toJSON() to ensure content is properly decrypted
+      const userMessageJson = userMessageDoc.toJSON();
+      const assistantMessageJson = assistantMessageDoc.toJSON();
+      
       return new SmartChatResponseDto(
         {
-          id: userMessageDoc._id.toString(),
-          content: userMessageDoc.content,
-          timestamp: userMessageDoc.createdAt
+          id: userMessageJson.id,
+          content: userMessageJson.content,
+          timestamp: userMessageJson.createdAt
         },
         {
-          id: assistantMessageDoc._id.toString(),
-          content: assistantMessageDoc.content,
-          timestamp: assistantMessageDoc.createdAt
+          id: assistantMessageJson.id,
+          content: assistantMessageJson.content,
+          timestamp: assistantMessageJson.createdAt
         },
         aiResponse.tokensUsed,
         totalMessages

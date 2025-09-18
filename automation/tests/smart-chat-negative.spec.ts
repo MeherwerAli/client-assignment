@@ -66,7 +66,7 @@ test.describe("Smart Chat Negative Scenarios", () => {
           {
             headers: {
               "Content-Type": "application/json",
-              "x-api-key": "test-api-key-12345",
+              "x-api-key": "dev-api-key-2024",
             },
             data: { message: "Hello" },
           }
@@ -96,6 +96,8 @@ test.describe("Smart Chat Negative Scenarios", () => {
           {
             headers: {
               "Content-Type": "application/json",
+              "x-user-id": "test-user-123",
+              "x-api-key": "", // Explicitly empty API key to override global header
               "Unique-Reference-Code": TestDataGenerator.generateURC(),
             },
             data: { message: "Hello" },
@@ -129,7 +131,7 @@ test.describe("Smart Chat Negative Scenarios", () => {
           {
             headers: {
               "Content-Type": "application/json",
-              "x-api-key": "test-api-key-12345",
+              "x-api-key": "dev-api-key-2024",
               "Unique-Reference-Code": TestDataGenerator.generateURC(),
             },
             data: {}, // Missing message
@@ -193,7 +195,7 @@ test.describe("Smart Chat Negative Scenarios", () => {
           {
             headers: {
               "Content-Type": "application/json",
-              "x-api-key": "test-api-key-12345",
+              "x-api-key": "dev-api-key-2024",
               "Unique-Reference-Code": TestDataGenerator.generateURC(),
             },
             data: "invalid json", // Invalid JSON
@@ -245,7 +247,7 @@ test.describe("Smart Chat Negative Scenarios", () => {
       testSessions.push(session.id);
 
       // Send multiple rapid requests to trigger rate limiting
-      const requests = [];
+      const requests: Promise<any>[] = [];
       for (let i = 0; i < 10; i++) {
         requests.push(api.smartChat(session.id, `Message ${i}`));
       }
@@ -253,7 +255,7 @@ test.describe("Smart Chat Negative Scenarios", () => {
       const responses = await Promise.all(requests);
 
       // Check if any response is rate limited
-      const rateLimitedResponse = responses.find((r) => r.status() === 429);
+      const rateLimitedResponse = responses.find((r: any) => r.status() === 429);
 
       if (rateLimitedResponse) {
         const responseBody = await rateLimitedResponse.json();

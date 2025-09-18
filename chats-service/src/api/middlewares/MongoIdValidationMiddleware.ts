@@ -20,7 +20,7 @@ export class MongoIdValidationMiddleware implements ExpressMiddlewareInterface {
     // Check if the route has an 'id' parameter that should be a MongoDB ObjectId
     if (!isEmptyOrNull(request.params.id) && !isMongoId(request.params.id)) {
       this.log.warn(`Invalid MongoDB ObjectId provided: ${request.params.id}`);
-      throw new CredError(HTTPCODES.BAD_REQUEST, CODES.InvalidQueryParam, 'ID must be a valid MongoDB ObjectId');
+      throw new CredError(HTTPCODES.BAD_REQUEST, CODES.InvalidQueryParam, 'Invalid session ID format - must be a valid MongoDB ObjectId');
     }
 
     if (!isEmptyOrNull(request.params.id)) {

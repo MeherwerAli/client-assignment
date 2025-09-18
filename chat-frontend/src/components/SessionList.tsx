@@ -207,13 +207,6 @@ export function SessionList({ onCreateSession }: SessionListProps) {
           </div>
         )}
       </div>
-
-      {/* Error Display */}
-      {state.error && (
-        <div className="p-4 bg-red-50 border-t border-red-200">
-          <p className="text-sm text-red-600">{state.error}</p>
-        </div>
-      )}
     </div>
   );
 }

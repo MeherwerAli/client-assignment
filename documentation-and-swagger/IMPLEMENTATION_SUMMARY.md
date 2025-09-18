@@ -5,7 +5,7 @@
 ### 1. **Enhanced Landing Page (http://localhost:3001/)**
 
 - Beautiful, modern design with clear navigation
-- **Prominent API key display**: `test-api-key-12345`
+- **Prominent API key display**: `dev-api-key-2024`
 - Two clear paths for API testing
 - Visual service cards with action buttons
 - Professional gradient design
@@ -32,7 +32,7 @@
 
 **In Swagger UI:**
 
-- Info section shows example key: `test-api-key-12345`
+- Info section shows example key: `dev-api-key-2024`
 - Security scheme description includes example
 - Authorization section clearly highlights requirements
 

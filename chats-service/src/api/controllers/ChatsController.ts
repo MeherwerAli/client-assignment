@@ -26,16 +26,20 @@ import {
   ToggleFavoriteDto
 } from '../dto';
 import { APIKeyMiddleware } from '../middlewares/APIKeyMiddleware';
+import { ContentTypeMiddleware } from '../middlewares/ContentTypeMiddleware';
+import { MethodValidationMiddleware } from '../middlewares/MethodValidationMiddleware';
 import { MongoIdValidationMiddleware } from '../middlewares/MongoIdValidationMiddleware';
 import { URCHeaderMiddleware } from '../middlewares/URCHeaderMiddleware';
 import { UserContextMiddleware } from '../middlewares/UserContextMiddleware';
 import { ChatService } from '../services/ChatService';
 @JsonController('/v1/chats')
 @UseBefore(
-  bodyParser.urlencoded({ extended: false }),
-  bodyParser.json(),
+  MethodValidationMiddleware,
+  ContentTypeMiddleware,
   URCHeaderMiddleware,
   APIKeyMiddleware,
+  bodyParser.urlencoded({ extended: false }),
+  bodyParser.json(),
   UserContextMiddleware,
   MongoIdValidationMiddleware
 )

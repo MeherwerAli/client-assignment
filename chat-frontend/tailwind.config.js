@@ -25,6 +25,26 @@ module.exports = {
           800: '#1f2937',
           900: '#111827',
         }
+      },
+      animation: {
+        'slide-up': 'slideUp 0.3s ease-out',
+        'progress': 'progress 1s linear forwards',
+      },
+      keyframes: {
+        slideUp: {
+          '0%': { 
+            transform: 'translateY(100%)',
+            opacity: '0'
+          },
+          '100%': { 
+            transform: 'translateY(0)',
+            opacity: '1'
+          },
+        },
+        progress: {
+          '0%': { width: '100%' },
+          '100%': { width: '0%' },
+        },
       }
     },
   },

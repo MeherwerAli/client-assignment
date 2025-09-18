@@ -62,7 +62,7 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if curl -s -f http://localhost:3002/chats-service/api/v1/health -H "x-api-key: test-api-key-12345" -H "Unique-Reference-Code: health-check" >/dev/null 2>&1; then
+    if curl -s -f http://localhost:3002/chats-service/api/v1/health -H "x-api-key: dev-api-key-2024" -H "Unique-Reference-Code: health-check" >/dev/null 2>&1; then
         print_success "Chat service is ready!"
         break
     fi
@@ -100,7 +100,7 @@ print_status "Running Playwright API tests..."
 
 # Set environment variables for tests
 export BASE_URL=http://localhost:3002
-export API_KEY=test-api-key-12345
+export API_KEY=dev-api-key-2024
 export NODE_ENV=test
 
 # Run different test suites

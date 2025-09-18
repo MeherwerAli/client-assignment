@@ -15,6 +15,7 @@ interface ChatState {
 type ChatAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'CLEAR_ERROR' }
   | { type: 'SET_SESSIONS'; payload: ChatSession[] }
   | { type: 'SET_CURRENT_SESSION'; payload: ChatSession | null }
   | { type: 'SET_MESSAGES'; payload: ChatMessage[] }
@@ -38,6 +39,8 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return { ...state, loading: action.payload };
     case 'SET_ERROR':
       return { ...state, error: action.payload, loading: false };
+    case 'CLEAR_ERROR':
+      return { ...state, error: null };
     case 'SET_SESSIONS':
       return { ...state, sessions: action.payload };
     case 'SET_CURRENT_SESSION':
@@ -82,6 +85,7 @@ interface ChatContextType {
     loadMessages: (sessionId: string, limit?: number, skip?: number) => Promise<void>;
     sendMessage: (content: string) => Promise<void>;
     sendSmartMessage: (content: string, context?: any) => Promise<void>;
+    clearError: () => void;
   };
 }
 
@@ -293,6 +297,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
+    },
+
+    clearError: () => {
+      dispatch({ type: 'CLEAR_ERROR' });
     },
   };
 

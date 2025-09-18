@@ -9,6 +9,7 @@
     "install-all": "npm install && cd chats-service && npm install"
   },
   "dependencies": {
+    "axios": "^1.12.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "swagger-ui-express": "^5.0.0",

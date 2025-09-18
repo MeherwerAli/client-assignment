@@ -7,6 +7,7 @@ import { ServiceKeyProvider } from './context/ServiceKeyContext';
 import { SessionList } from './components/SessionList';
 import { ChatInterface } from './components/ChatInterface';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorToast } from './components/ErrorToast';
 
 function AppContent() {
   const { actions, state } = useChatContext();
@@ -68,6 +69,16 @@ function AppContent() {
 
         <ChatInterface onNewSession={handleCreateSession} />
       </div>
+
+      {/* Global Error Toast */}
+      {state.error && (
+        <ErrorToast 
+          message={state.error} 
+          onClose={actions.clearError}
+          autoClose={true}
+          autoCloseDelay={6000}
+        />
+      )}
     </div>
   );
 }

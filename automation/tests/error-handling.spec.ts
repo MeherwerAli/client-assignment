@@ -10,9 +10,10 @@ test.describe("Error Handling and Edge Cases", () => {
 
   test.describe("Content-Type Validation", () => {
     test("should handle missing Content-Type header", async ({ request }) => {
-      const response = await request.post("http://localhost:3002/v1/chats", {
+      const response = await request.post("http://localhost:3002/chats-service/api/v1/chats", {
         headers: {
-          "x-api-key": "test-api-key-12345",
+          "x-api-key": "dev-api-key-2024",
+          "x-user-id": "test-user-123",
           "Unique-Reference-Code": "test-no-content-type",
           // Missing Content-Type header
         },
@@ -26,13 +27,13 @@ test.describe("Error Handling and Edge Cases", () => {
     });
 
     test("should handle invalid Content-Type", async ({ request }) => {
-      const response = await request.post("http://localhost:3002/v1/chats", {
+      const response = await request.post("http://localhost:3002/chats-service/api/v1/chats", {
         headers: {
-          "Content-Type": "text/plain",
-          "x-api-key": "test-api-key-12345",
+          "Content-Type": "text/plain", // Invalid content type
+          "x-api-key": "dev-api-key-2024",
           "Unique-Reference-Code": "test-invalid-content-type",
         },
-        data: "Invalid JSON data",
+        data: JSON.stringify({ name: "Test Session" }),
       });
 
       expect(response.status()).toBe(400);
@@ -41,10 +42,10 @@ test.describe("Error Handling and Edge Cases", () => {
 
   test.describe("JSON Parsing", () => {
     test("should handle malformed JSON", async ({ request }) => {
-      const response = await request.post("http://localhost:3002/v1/chats", {
+      const response = await request.post("http://localhost:3002/chats-service/api/v1/chats", {
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": "test-api-key-12345",
+          "x-api-key": "dev-api-key-2024",
           "Unique-Reference-Code": "test-malformed-json",
         },
         data: "{ invalid json }",
@@ -59,11 +60,11 @@ test.describe("Error Handling and Edge Cases", () => {
       request,
     }) => {
       const response = await request.patch(
-        "http://localhost:3002/v1/chats/507f1f77bcf86cd799439011",
+        "http://localhost:3002/chats-service/api/v1/chats/507f1f77bcf86cd799439011",
         {
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": "test-api-key-12345",
+            "x-api-key": "dev-api-key-2024",
             "Unique-Reference-Code": "test-empty-body",
           },
           // No data provided
@@ -150,23 +151,23 @@ test.describe("Error Handling and Edge Cases", () => {
 
   test.describe("Concurrent Operations", () => {
     test("should handle concurrent session creation", async () => {
-      const promises = [];
+      const promises: Promise<any>[] = [];
       for (let i = 0; i < 10; i++) {
         promises.push(api.createSession(`Concurrent Session ${i}`));
       }
 
       const responses = await Promise.all(promises);
-      const sessions = [];
+      const sessions: any[] = [];
 
       // All should succeed
-      responses.forEach((response) => {
+      responses.forEach((response: any) => {
         expect(response.ok()).toBeTruthy();
       });
 
       // Get session data for cleanup
       for (const response of responses) {
-        if (response.ok()) {
-          sessions.push(await response.json());
+        if ((response as any).ok()) {
+          sessions.push(await (response as any).json());
         }
       }
 
@@ -189,7 +190,7 @@ test.describe("Error Handling and Edge Cases", () => {
       const session = await createResponse.json();
 
       // Add multiple messages concurrently
-      const promises = [];
+      const promises: Promise<any>[] = [];
       for (let i = 0; i < 10; i++) {
         const messageData = TestDataGenerator.generateMessage("user");
         promises.push(
@@ -200,7 +201,7 @@ test.describe("Error Handling and Edge Cases", () => {
       const responses = await Promise.all(promises);
 
       // All should succeed
-      responses.forEach((response) => {
+      responses.forEach((response: any) => {
         expect(response.ok()).toBeTruthy();
       });
 
@@ -295,10 +296,10 @@ test.describe("Error Handling and Edge Cases", () => {
   test.describe("HTTP Methods Validation", () => {
     test("should reject unsupported HTTP methods", async ({ request }) => {
       // Try OPTIONS on create endpoint
-      const response = await request.fetch("http://localhost:3002/v1/chats", {
+      const response = await request.fetch("http://localhost:3002/chats-service/api/v1/chats", {
         method: "OPTIONS",
         headers: {
-          "x-api-key": "test-api-key-12345",
+          "x-api-key": "dev-api-key-2024",
           "Unique-Reference-Code": "test-options",
         },
       });
@@ -312,10 +313,10 @@ test.describe("Error Handling and Edge Cases", () => {
     test("should reject PUT method on endpoints that don't support it", async ({
       request,
     }) => {
-      const response = await request.put("http://localhost:3002/v1/chats", {
+      const response = await request.put("http://localhost:3002/chats-service/api/v1/chats", {
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": "test-api-key-12345",
+          "x-api-key": "dev-api-key-2024",
           "Unique-Reference-Code": "test-put",
         },
         data: JSON.stringify({ title: "Test" }),

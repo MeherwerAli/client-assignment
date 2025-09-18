@@ -3,6 +3,7 @@ const swaggerUi = require("swagger-ui-express");
 const YAML = require("yamljs");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.SWAGGER_PORT || 3001;
@@ -343,10 +344,10 @@ app.get("/", (req, res) => {
         <div class="api-key-notice">
           <h3>🔑 Authentication Required</h3>
           <p>All APIs require authentication using the <code>x-api-key</code> header:</p>
-          <div class="api-key-value">test-api-key-12345</div>
+          <div class="api-key-value">dev-api-key-2024</div>
           <p><strong>Required Headers:</strong></p>
           <ul>
-            <li><code>x-api-key: test-api-key-12345</code></li>
+            <li><code>x-api-key: dev-api-key-2024</code></li>
             <li><code>Unique-Reference-Code: REQ-123456789</code></li>
           </ul>
         </div>
@@ -379,6 +380,20 @@ app.get("/", (req, res) => {
               </a>
             </div>
           </div>
+
+          <div class="service-card">
+            <h3>🧪 Test Reports</h3>
+            <p>View comprehensive automation test results with detailed reports, trace files, and performance metrics.</p>
+            
+            <div class="btn-group">
+              <a href="/test-reports" class="btn btn-success" target="_blank">
+                <span class="icon">📊</span>View Reports
+              </a>
+              <a href="/run-tests" class="btn btn-secondary">
+                <span class="icon">▶️</span>Run Tests
+              </a>
+            </div>
+          </div>
         </div>
 
         <footer>
@@ -395,6 +410,222 @@ app.get("/", (req, res) => {
 // Serve the custom API tester
 app.get("/api-tester", (req, res) => {
   res.sendFile(path.join(__dirname, "api-tester.html"));
+});
+
+// Serve Playwright test reports
+app.use("/test-reports", express.static(path.join(__dirname, "../automation/playwright-report")));
+
+// Test reports route
+app.get("/test-reports", (req, res) => {
+  const reportPath = path.join(__dirname, "../automation/playwright-report/index.html");
+  if (fs.existsSync(reportPath)) {
+    res.sendFile(reportPath);
+  } else {
+    res.status(404).json({
+      error: "Test reports not found",
+      message: "Please run the tests first to generate reports: npm test",
+      hint: "Run 'cd automation && npm test' to generate test reports"
+    });
+  }
+});
+
+// Run tests endpoint
+app.post("/run-tests", async (req, res) => {
+  const { spawn } = require('child_process');
+  const axios = require('axios');
+  
+  try {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Transfer-Encoding': 'chunked',
+      'Access-Control-Allow-Origin': '*'
+    });
+    
+    res.write('🚀 Starting automation tests...\n\n');
+    
+    // Check if chat service is ready before running tests
+    res.write('⏳ Checking service readiness...\n');
+    
+    try {
+      const healthResponse = await axios.get('http://localhost:3002/chats-service/api/v1/health', {
+        headers: {
+          'x-api-key': 'dev-api-key-2024',
+          'Unique-Reference-Code': 'ui-test-runner-health-check'
+        },
+        timeout: 5000
+      });
+      
+      if (healthResponse.status === 200) {
+        res.write('✅ Chat service is ready!\n\n');
+      } else {
+        throw new Error(`Service not ready: ${healthResponse.status}`);
+      }
+    } catch (healthError) {
+      res.write(`❌ Service health check failed: ${healthError.message}\n`);
+      res.write('🔧 Please ensure all services are running with: docker-compose up -d\n');
+      res.write('⏳ Waiting a bit longer for services to start...\n\n');
+      
+      // Wait a bit and try to continue anyway
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+    
+    const testProcess = spawn('npm', ['test'], {
+      cwd: path.join(__dirname, '../automation'),
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+    
+    testProcess.stdout.on('data', (data) => {
+      res.write(data);
+    });
+    
+    testProcess.stderr.on('data', (data) => {
+      res.write(`ERROR: ${data}`);
+    });
+    
+    testProcess.on('close', (code) => {
+      res.write(`\n\n✅ Tests completed with exit code: ${code}\n`);
+      res.write(`📊 View detailed reports at: /test-reports\n`);
+      res.end();
+    });
+    
+    testProcess.on('error', (error) => {
+      res.write(`\n❌ Failed to start test process: ${error.message}\n`);
+      res.end();
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      error: "Failed to run tests",
+      message: error.message
+    });
+  }
+});
+
+// UI for running tests
+app.get("/run-tests", (req, res) => {
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Run API Tests</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 2rem;
+          background: #f8fafc;
+        }
+        .container {
+          background: white;
+          border-radius: 0.75rem;
+          padding: 2rem;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+          background: #3b82f6;
+          color: white;
+          padding: 0.75rem 1.5rem;
+          border: none;
+          border-radius: 0.5rem;
+          cursor: pointer;
+          font-size: 1rem;
+          margin-right: 1rem;
+        }
+        .btn:hover {
+          background: #2563eb;
+        }
+        .btn-success {
+          background: #059669;
+        }
+        .btn-success:hover {
+          background: #047857;
+        }
+        #output {
+          background: #1e293b;
+          color: #f1f5f9;
+          padding: 1rem;
+          border-radius: 0.5rem;
+          margin-top: 1rem;
+          font-family: monospace;
+          white-space: pre-wrap;
+          max-height: 500px;
+          overflow-y: auto;
+          display: none;
+        }
+        .loading {
+          display: none;
+          color: #3b82f6;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>🧪 API Test Runner</h1>
+        <p>Run comprehensive automation tests for the Chat Service API</p>
+        
+        <button onclick="runTests()" class="btn" id="runBtn">
+          ▶️ Run All Tests
+        </button>
+        
+        <a href="/test-reports" class="btn btn-success" target="_blank">
+          📊 View Last Report
+        </a>
+        
+        <a href="/" class="btn" style="background: #6b7280;">
+          🏠 Back to Hub
+        </a>
+        
+        <div class="loading" id="loading">
+          🔄 Running tests... This may take a few minutes.
+        </div>
+        
+        <div id="output"></div>
+      </div>
+      
+      <script>
+        async function runTests() {
+          const runBtn = document.getElementById('runBtn');
+          const loading = document.getElementById('loading');
+          const output = document.getElementById('output');
+          
+          runBtn.disabled = true;
+          runBtn.textContent = '⏳ Running...';
+          loading.style.display = 'block';
+          output.style.display = 'block';
+          output.textContent = '';
+          
+          try {
+            const response = await fetch('/run-tests', {
+              method: 'POST'
+            });
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              
+              const text = decoder.decode(value);
+              output.textContent += text;
+              output.scrollTop = output.scrollHeight;
+            }
+          } catch (error) {
+            output.textContent += 'Error: ' + error.message;
+          } finally {
+            runBtn.disabled = false;
+            runBtn.textContent = '▶️ Run All Tests';
+            loading.style.display = 'none';
+          }
+        }
+      </script>
+    </body>
+    </html>
+  `;
+  res.send(html);
 });
 
 // Main Swagger UI with service selector
@@ -423,6 +654,8 @@ app.use("*", (req, res) => {
       "/",
       "/docs",
       "/api-tester",
+      "/test-reports",
+      "/run-tests",
       "/health",
       "/api-docs/chats-service.json",
     ],
