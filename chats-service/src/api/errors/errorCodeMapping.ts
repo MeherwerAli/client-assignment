@@ -21,6 +21,11 @@ const errors: { [key: string]: { code: string; message?: string; description?: s
     message: 'Not Found',
     description: 'Not Found'
   },
+  [CODES.InvalidQueryParam]: {
+    code: 'VALIDATION.INVALID_UUID',
+    message: 'Invalid UUID format',
+    description: 'The provided ID must be a valid UUID'
+  },
   [CODES.OpenAIError]: {
     code: 'OPENAI.GENERAL_ERROR',
     message: 'OpenAI service error',

@@ -26,9 +26,7 @@ import {
   ToggleFavoriteDto
 } from '../dto';
 import { APIKeyMiddleware } from '../middlewares/APIKeyMiddleware';
-import { ContentTypeMiddleware } from '../middlewares/ContentTypeMiddleware';
-import { MethodValidationMiddleware } from '../middlewares/MethodValidationMiddleware';
-import { MongoIdValidationMiddleware } from '../middlewares/MongoIdValidationMiddleware';
+import { UuidValidationMiddleware } from '../middlewares/UuidValidationMiddleware';
 import { URCHeaderMiddleware } from '../middlewares/URCHeaderMiddleware';
 import { UserContextMiddleware } from '../middlewares/UserContextMiddleware';
 import { ChatService } from '../services/ChatService';
@@ -41,7 +39,7 @@ import { ChatService } from '../services/ChatService';
   bodyParser.urlencoded({ extended: false }),
   bodyParser.json(),
   UserContextMiddleware,
-  MongoIdValidationMiddleware
+  UuidValidationMiddleware
 )
 export class ChatsController {
   private log = new Logger(__filename);
@@ -103,7 +101,7 @@ export class ChatsController {
     this.log.info(logMessage);
     this.log.debug(`Toggling favorite for session ${id} to: ${body.isFavorite} for user: ${req.userId}`);
 
-    return this.chatService.toggleFavorite(id, body.isFavorite, req.userId, headers);
+    return this.chatService.toggleFavoriteSession(id, body.isFavorite, req.userId, headers);
   }
 
   @Delete('/:id')

@@ -9,6 +9,11 @@ describe('errorCodeMapping', () => {
         message: 'Invalid Request Parameters',
         description: 'Invalid Request Parameters'
       },
+      [CODES.NotAuthorized]: {
+        code: 'AUTH.INVALID_API_KEY',
+        message: 'Authentication failed: Incorrect Service Authentication Key',
+        description: 'The provided API key is invalid. Please check your service authentication key.'
+      },
       [CODES.GenericErrorMessage]: {
         code: 'GLOBAL.INTERVAL_SERVER_ERROR',
         message: 'There is some issue. Please contact administrator',
@@ -38,6 +43,11 @@ describe('errorCodeMapping', () => {
         code: 'OPENAI.RATE_LIMIT',
         message: 'OpenAI rate limit exceeded',
         description: 'Too many requests to OpenAI service. Please try again later.'
+      },
+      [CODES.InvalidQueryParam]: {
+        code: 'VALIDATION.INVALID_UUID',
+        message: 'Invalid UUID format',
+        description: 'The provided ID must be a valid UUID'
       }
     };
     expect(constantErrors).toEqual(expectedErrors);

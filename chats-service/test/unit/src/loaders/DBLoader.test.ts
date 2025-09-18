@@ -1,29 +1,36 @@
-import mongoose from 'mongoose';
+import { AppDataSource } from '../../../../src/database/data-source';
 import connectDB from '../../../../src/loaders/DBLoader';
 
-jest.mock('mongoose');
+jest.mock('../../../../src/database/data-source');
 
 describe('connectDB', () => {
+  const mockAppDataSource = AppDataSource as jest.Mocked<typeof AppDataSource>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should connect to the database successfully', async () => {
-    const mockConnect = jest.fn().mockResolvedValue({
-      connection: {
+    mockAppDataSource.initialize = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(mockAppDataSource, 'options', {
+      value: {
         host: 'localhost',
-        name: 'testDB'
-      }
+        port: 5432,
+        database: 'testDB'
+      },
+      writable: false
     });
-    mongoose.connect = mockConnect;
 
     await connectDB();
 
-    expect(mockConnect).toHaveBeenCalledWith(expect.any(String));
+    expect(mockAppDataSource.initialize).toHaveBeenCalled();
   });
 
   it('should handle connection errors', async () => {
-    const mockConnect = jest.fn().mockRejectedValue(new Error('Connection error'));
-    mongoose.connect = mockConnect;
+    const connectionError = new Error('Connection error');
+    mockAppDataSource.initialize = jest.fn().mockRejectedValue(connectionError);
 
-    await connectDB();
-
-    expect(mockConnect).toHaveBeenCalledWith(expect.any(String));
+    await expect(connectDB()).rejects.toThrow('Connection error');
+    expect(mockAppDataSource.initialize).toHaveBeenCalled();
   });
 });

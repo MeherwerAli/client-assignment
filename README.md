@@ -23,7 +23,7 @@ Root Directory/
 │   │   ├── api/
 │   │   │   ├── controllers/      # REST API endpoints (ChatsController)
 │   │   │   ├── services/         # Business logic (ChatService, OpenAIService)
-│   │   │   ├── models/           # MongoDB schemas with encryption
+│   │   │   ├── models/           # PostgreSQL entities with TypeORM
 │   │   │   ├── middlewares/      # Auth, validation, error handling
 │   │   │   ├── dto/              # Request/response validation
 │   │   │   └── errors/           # Custom error system
@@ -55,7 +55,7 @@ Root Directory/
 │
 ├── 🐳 Docker Infrastructure
 │   ├── docker-compose.yml        # Multi-service orchestration
-│   ├── docker-compose-local-mongo.yml # Local MongoDB setup
+│   ├── docker-compose-local-mongo.yml # Legacy MongoDB setup (deprecated)
 │   └── .dockerignore             # Container build exclusions
 │
 ├── 🔧 DevOps & Scripts
@@ -80,7 +80,7 @@ Root Directory/
 
 **Backend Layer** (Node.js + TypeScript)
 - RESTful API with routing-controllers
-- MongoDB with Mongoose ODM
+- PostgreSQL with TypeORM
 - Dependency injection with TypeDI
 - Custom error handling and logging system
 
@@ -92,7 +92,7 @@ Root Directory/
 
 **Infrastructure Layer**
 - Docker containers for all services
-- MongoDB database with authentication
+- PostgreSQL database with authentication
 - Nginx for frontend serving
 - Health checks and monitoring
 
@@ -139,7 +139,7 @@ Root Directory/
 **Technology Stack:**
 - Node.js + TypeScript
 - Express with routing-controllers
-- MongoDB with Mongoose ODM
+- PostgreSQL with TypeORM
 - TypeDI for dependency injection
 - OpenAI API integration
 - Docker containerization
@@ -203,7 +203,7 @@ docker-compose down
 | **Frontend** | 3003 | http://localhost:3003 | ✅ Ready |
 | **Backend API** | 3002 | http://localhost:3002/chats-service/api | ✅ Ready |
 | **Documentation** | 3001 | http://localhost:3001 | ✅ Ready |
-| **MongoDB** | 27017 | mongodb://localhost:27017 | ✅ Ready |
+| **PostgreSQL DB** | 5432 | postgresql://localhost:5432/chatdb | ✅ Ready |
 
 ### Environment Configuration
 

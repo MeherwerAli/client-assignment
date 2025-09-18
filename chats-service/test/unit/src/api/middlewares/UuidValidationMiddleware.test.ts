@@ -1,16 +1,16 @@
 import { Request, Response } from 'express';
 import 'reflect-metadata';
-import { CODES, HTTPCODES } from '../../../../../src/api/errors/errorCodeConstants';
-import { MongoIdValidationMiddleware } from '../../../../../src/api/middlewares/MongoIdValidationMiddleware';
+import { HTTPCODES } from '../../../../../src/api/errors/errorCodeConstants';
+import { UuidValidationMiddleware } from '../../../../../src/api/middlewares/UuidValidationMiddleware';
 
-describe('MongoIdValidationMiddleware', () => {
-  let middleware: MongoIdValidationMiddleware;
+describe('UuidValidationMiddleware', () => {
+  let middleware: UuidValidationMiddleware;
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let mockNext: jest.Mock;
 
   beforeEach(() => {
-    middleware = new MongoIdValidationMiddleware();
+    middleware = new UuidValidationMiddleware();
     mockRequest = {
       params: {},
       header: jest.fn().mockReturnValue('test-urc')
@@ -24,23 +24,23 @@ describe('MongoIdValidationMiddleware', () => {
   });
 
   describe('when id parameter is present', () => {
-    it('should call next() when id is a valid MongoDB ObjectId', () => {
-      mockRequest.params = { id: '507f1f77bcf86cd799439011' };
+    it('should call next() when id is a valid UUID', () => {
+      mockRequest.params = { id: '550e8400-e29b-41d4-a716-446655440000' };
 
       middleware.use(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
     });
 
-    it('should call next() when id is another valid MongoDB ObjectId format', () => {
-      mockRequest.params = { id: '65f7a8b1c4d5e6f789012345' };
+    it('should call next() when id is another valid UUID format', () => {
+      mockRequest.params = { id: '123e4567-e89b-12d3-a456-426614174000' };
 
       middleware.use(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
     });
 
-    it('should throw error when id is not a valid MongoDB ObjectId', () => {
+    it('should throw error when id is not a valid UUID', () => {
       mockRequest.params = { id: 'invalid-id' };
 
       expect(() => {
@@ -68,8 +68,8 @@ describe('MongoIdValidationMiddleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
-    it('should throw error when id is too long', () => {
-      mockRequest.params = { id: '507f1f77bcf86cd7994390111234567890' };
+    it('should throw error when id has wrong format', () => {
+      mockRequest.params = { id: '507f1f77-bcf8-6cd7-9943-9011' }; // Missing one section
 
       expect(() => {
         middleware.use(mockRequest as Request, mockResponse as Response, mockNext);
@@ -100,8 +100,8 @@ describe('MongoIdValidationMiddleware', () => {
 
       expect(thrownError).toBeDefined();
       expect(thrownError.httpCode).toBe(HTTPCODES.BAD_REQUEST);
-      expect(thrownError.code).toBe(CODES.InvalidQueryParam);
-      expect(thrownError.message).toBe('ID must be a valid MongoDB ObjectId');
+      expect(thrownError.code).toBe('VALIDATION.INVALID_UUID');
+      expect(thrownError.message).toBe('Invalid UUID format');
     });
   });
 

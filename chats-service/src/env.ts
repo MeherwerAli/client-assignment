@@ -52,7 +52,15 @@ export const env = {
     output: getOsEnv('LOG_OUTPUT') || 'stdout'
   },
   db: {
-    mongoURL: getOsEnv('MONGO_URL') || 'mongodb://127.0.0.1:27017/ChatDB'
+    // Legacy MongoDB support (will be removed)
+    mongoURL: getOsEnv('MONGO_URL') || 'mongodb://127.0.0.1:27017/ChatDB',
+    // PostgreSQL configuration
+    host: getOsEnv('DB_HOST') || 'localhost',
+    port: toNumber(getOsEnv('DB_PORT')) || 5432,
+    username: getOsEnv('DB_USERNAME') || 'postgres',
+    password: getOsEnv('DB_PASSWORD') || 'password',
+    database: getOsEnv('DB_DATABASE') || 'chatdb',
+    schema: getOsEnv('DB_SCHEMA') || 'public'
   },
   monitor: {
     enabled: toBool(getOsEnv('MONITOR_ENABLED')),

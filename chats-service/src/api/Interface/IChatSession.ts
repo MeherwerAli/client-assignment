@@ -1,6 +1,5 @@
-import { Document } from 'mongoose';
-
-export interface IChatSession extends Document {
+export interface IChatSession {
+  id: string;
   title: string;
   userId?: string;
   isFavorite: boolean;

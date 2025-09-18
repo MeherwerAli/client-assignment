@@ -1,17 +1,21 @@
-import mongoose from 'mongoose';
-import { env } from '../env';
+import 'reflect-metadata';
+import { AppDataSource } from '../database/data-source';
 import { Logger } from '../lib/logger';
 
 const connectDB = async () => {
   const log = new Logger(__filename);
   try {
-    mongoose.set('strictQuery', true);
-    const connection = await mongoose.connect(env.db.mongoURL);
+    await AppDataSource.initialize();
+    const options = AppDataSource.options as any;
     log.info(
-      `Logging Service is Successfully connected to Mongodb: ${connection.connection.host} to db ${connection.connection.name}`
+      `Successfully connected to PostgreSQL: ${options.host}:${options.port} database: ${options.database}`
     );
   } catch (error: any) {
-    log.error('Could not Connect to MongoDB: ', error);
+    log.error('Could not connect to PostgreSQL: ', JSON.stringify(error, null, 2));
+    log.error('Error name:', error.name);
+    log.error('Error message:', error.message);
+    log.error('Error stack:', error.stack);
+    throw error;
   }
 };
 

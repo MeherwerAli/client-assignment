@@ -8,8 +8,8 @@ describe('SessionParamDto', () => {
     dto = new SessionParamDto();
   });
 
-  it('should pass validation with valid MongoDB ObjectId', async () => {
-    dto.id = '507f1f77bcf86cd799439011';
+  it('should pass validation with valid UUID', async () => {
+    dto.id = '550e8400-e29b-41d4-a716-446655440000';
     const errors = await validate(dto);
     expect(errors).toHaveLength(0);
   });
@@ -20,11 +20,11 @@ describe('SessionParamDto', () => {
     expect(errors[0].constraints?.isNotEmpty).toBe('Session ID is required');
   });
 
-  it('should fail validation when id is not a valid MongoDB ObjectId', async () => {
+  it('should fail validation when id is not a valid UUID', async () => {
     dto.id = 'invalid-id';
     const errors = await validate(dto);
     expect(errors).toHaveLength(1);
-    expect(errors[0].constraints?.isMongoId).toBe('Session ID must be a valid MongoDB ObjectId');
+    expect(errors[0].constraints?.isUuid).toBe('Session ID must be a valid UUID');
   });
 
   it('should fail validation when id is not a string', async () => {

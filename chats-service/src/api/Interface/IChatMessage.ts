@@ -1,7 +1,6 @@
-import { Document, Schema } from 'mongoose';
-
-export interface IChatMessage extends Document {
-  sessionId: Schema.Types.ObjectId;
+export interface IChatMessage {
+  id: string;
+  sessionId: string;
   sender: 'user' | 'assistant' | 'system';
   content: string;
   context?: any;

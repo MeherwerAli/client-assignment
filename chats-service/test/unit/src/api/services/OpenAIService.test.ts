@@ -5,9 +5,9 @@ import { ChatMessage, OpenAIService } from '../../../../../src/api/services/Open
 
 // Logger is mocked globally in test/setup.ts
 
-// Mock the helpers
+// Mock constructLogMessage and helpers
 jest.mock('../../../../../src/lib/env/helpers', () => ({
-  constructLogMessage: jest.fn((filename, method, headers) => `${filename}:${method}:${headers?.urc || 'unknown'}`),
+  constructLogMessage: jest.fn().mockReturnValue('mocked log message'),
   isEmptyOrNull: jest.fn(value => {
     if (value === null || value === undefined) return true;
     if (typeof value === 'string' && value.trim() === '') return true;
@@ -54,12 +54,8 @@ jest.mock('../../../../../src/env', () => ({
   }
 }));
 
-// Mock constructLogMessage and Logger
-jest.mock('../../../../../src/lib/env/helpers', () => ({
-  constructLogMessage: jest.fn().mockReturnValue('mocked log message')
-}));
-
-jest.mock('../../../../../src/lib/logger', () => ({
+// Mock Logger
+jest.mock('../../../../../src/lib/logger/Logger', () => ({
   Logger: jest.fn().mockImplementation(() => ({
     info: jest.fn(),
     error: jest.fn(),

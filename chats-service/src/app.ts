@@ -6,7 +6,6 @@ import './loaders/iocLoader';
 import { banner } from './lib/banner';
 import { Logger } from './lib/logger';
 import connectDB from './loaders/DBLoader';
-import './loaders/expressLoader';
 import './loaders/homeLoader';
 import { winstonLoader } from './loaders/winstonLoader';
 
@@ -16,13 +15,12 @@ const log = new Logger(__filename);
   try {
     await connectDB();
     await winstonLoader();
+    
+    // Only start Express server after database is connected
+    await import('./loaders/expressLoader');
+    
+    banner(log);
   } catch (error: any) {
     log.error(`Error while initializing the app`, { error });
   }
 })();
-
-try {
-  banner(log);
-} catch (error: any) {
-  log.error('Application Crashed ', error);
-}
