@@ -85,6 +85,7 @@ export function ChatInterface({ onNewSession }: ChatInterfaceProps) {
   const renderMessage = (msg: ChatMessage) => {
     const isUser = msg.sender === 'user';
     const isSystem = msg.sender === 'system';
+    const isThinking = msg.isThinking;
 
     return (
       <div
@@ -113,12 +114,25 @@ export function ChatInterface({ onNewSession }: ChatInterfaceProps) {
                 : 'bg-gray-100 text-gray-800'
             }`}
           >
-            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-            <p className={`text-xs mt-1 ${
-              isUser ? 'text-primary-100' : 'text-gray-500'
-            }`}>
-              {formatMessageTime(msg.createdAt)}
-            </p>
+            {isThinking ? (
+              <div className="flex items-center space-x-1">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+                <span className="text-xs text-gray-500 ml-2">AI is thinking...</span>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                <p className={`text-xs mt-1 ${
+                  isUser ? 'text-primary-100' : 'text-gray-500'
+                }`}>
+                  {formatMessageTime(msg.createdAt)}
+                </p>
+              </>
+            )}
           </div>
 
           {isUser && (

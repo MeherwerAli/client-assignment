@@ -23,7 +23,9 @@ type ChatAction =
   | { type: 'UPDATE_SESSION'; payload: ChatSession }
   | { type: 'DELETE_SESSION'; payload: string }
   | { type: 'ADD_MESSAGE'; payload: ChatMessage }
-  | { type: 'ADD_MESSAGES'; payload: ChatMessage[] };
+  | { type: 'ADD_MESSAGES'; payload: ChatMessage[] }
+  | { type: 'ADD_THINKING_MESSAGE'; payload: { id: string; sessionId: string } }
+  | { type: 'REMOVE_THINKING_MESSAGE'; payload: string };
 
 const initialState: ChatState = {
   sessions: [],
@@ -68,6 +70,22 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return { ...state, messages: [...state.messages, action.payload] };
     case 'ADD_MESSAGES':
       return { ...state, messages: [...state.messages, ...action.payload] };
+    case 'ADD_THINKING_MESSAGE':
+      const thinkingMessage: ChatMessage = {
+        id: action.payload.id,
+        sessionId: action.payload.sessionId,
+        sender: 'assistant',
+        content: 'thinking...',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isThinking: true
+      };
+      return { ...state, messages: [...state.messages, thinkingMessage] };
+    case 'REMOVE_THINKING_MESSAGE':
+      return { 
+        ...state, 
+        messages: state.messages.filter(msg => msg.id !== action.payload) 
+      };
     default:
       return state;
   }
@@ -210,12 +228,29 @@ export function ChatProvider({ children }: ChatProviderProps) {
       
       console.log('Sending message:', content, 'to session:', state.currentSession.id);
       
+      // Generate a temporary ID for optimistic update
+      const tempMessageId = `temp-msg-${Date.now()}`;
+      
       try {
+        // Immediately add user message to UI (optimistic update)
+        const optimisticMessage: ChatMessage = {
+          id: tempMessageId,
+          sessionId: state.currentSession.id,
+          sender: 'user',
+          content,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        dispatch({ type: 'ADD_MESSAGE', payload: optimisticMessage });
+        
         const message = await chatAPI.addMessage(state.currentSession.id, {
           sender: 'user',
           content
         });
         console.log('Message sent successfully:', message);
+        
+        // Remove temp message and add real one
+        dispatch({ type: 'REMOVE_THINKING_MESSAGE', payload: tempMessageId });
         dispatch({ type: 'ADD_MESSAGE', payload: message });
 
         // Auto-rename "New Chat" sessions to first message content
@@ -229,6 +264,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
           }
         }
       } catch (error) {
+        // Remove temp message on error
+        dispatch({ type: 'REMOVE_THINKING_MESSAGE', payload: tempMessageId });
         console.error('Failed to send message:', error);
         dispatch({ type: 'SET_ERROR', payload: 'Failed to send message' });
       }
@@ -242,8 +279,26 @@ export function ChatProvider({ children }: ChatProviderProps) {
       
       console.log('Sending smart message:', content, 'to session:', state.currentSession.id);
       
+      // Generate a temporary ID for the user message and thinking message
+      const tempUserMessageId = `temp-user-${Date.now()}`;
+      const tempThinkingId = `temp-thinking-${Date.now()}`;
+      
       try {
         dispatch({ type: 'SET_LOADING', payload: true });
+        
+        // Immediately add user message to UI (optimistic update)
+        const optimisticUserMessage: ChatMessage = {
+          id: tempUserMessageId,
+          sessionId: state.currentSession.id,
+          sender: 'user',
+          content,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        dispatch({ type: 'ADD_MESSAGE', payload: optimisticUserMessage });
+        
+        // Add "thinking" animation message
+        dispatch({ type: 'ADD_THINKING_MESSAGE', payload: { id: tempThinkingId, sessionId: state.currentSession.id } });
         
         // Send the smart chat request which handles both user message and AI response
         const response = await chatAPI.smartChat(state.currentSession.id, {
@@ -253,7 +308,12 @@ export function ChatProvider({ children }: ChatProviderProps) {
         });
         console.log('Smart chat response received:', response);
         
-        // Add the user message from the response
+        // Remove the thinking message
+        dispatch({ type: 'REMOVE_THINKING_MESSAGE', payload: tempThinkingId });
+        
+        // Remove the temporary user message and add the real one from server
+        dispatch({ type: 'REMOVE_THINKING_MESSAGE', payload: tempUserMessageId });
+        
         if (response.userMessage) {
           const userMessage: ChatMessage = {
             id: response.userMessage.id,
@@ -263,7 +323,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
             createdAt: response.userMessage.timestamp,
             updatedAt: response.userMessage.timestamp
           };
-          console.log('Adding user message to chat:', userMessage);
+          console.log('Adding real user message from server:', userMessage);
           dispatch({ type: 'ADD_MESSAGE', payload: userMessage });
         }
         
@@ -293,6 +353,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
           }
         }
       } catch (error) {
+        // Remove thinking message and temp user message on error
+        dispatch({ type: 'REMOVE_THINKING_MESSAGE', payload: tempThinkingId });
+        dispatch({ type: 'REMOVE_THINKING_MESSAGE', payload: tempUserMessageId });
         handleApiError(error, 'Failed to send smart message');
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false });

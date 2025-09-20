@@ -16,6 +16,7 @@ export interface ChatMessage {
   context?: any;
   createdAt: string;
   updatedAt: string;
+  isThinking?: boolean; // For temporary "thinking" messages
 }
 
 export interface CreateSessionRequest {

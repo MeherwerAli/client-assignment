@@ -1,7 +1,8 @@
 import { Service } from 'typedi';
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../../database/data-source';
-// import { Logger } from '../../lib/logger'; // Temporarily commented for testing
+import { Logger } from '../../lib/logger';
+import { constructLogMessage } from '../../lib/env/helpers';
 import { IRequestHeaders } from '../Interface/IRequestHeaders';
 import { SmartChatResponseDto } from '../dto/SmartChatDto';
 import { CredError } from '../errors/CredError';
@@ -12,19 +13,19 @@ import { OpenAIService } from './OpenAIService';
 
 @Service()
 export class ChatService {
-  // private log = new Logger(__filename); // Temporarily commented for testing
+  private log = new Logger(__filename);
   private sessionRepository: Repository<ChatSession>;
   private messageRepository: Repository<ChatMessage>;
 
   constructor(private openAIService: OpenAIService) {
-    // this.log.info('Starting ChatService'); // Temporarily commented for testing
+    this.log.info('Starting ChatService');
     this.sessionRepository = AppDataSource.getRepository(ChatSession);
     this.messageRepository = AppDataSource.getRepository(ChatMessage);
   }
 
   public async getUserSessions(userId: string, headers: IRequestHeaders) {
-    // const logMessage = constructLogMessage(__filename, 'getUserSessions', headers);
-    // this.log.info(logMessage); // Temporarily commented for testing
+    const logMessage = constructLogMessage(__filename, 'getUserSessions', headers);
+    this.log.info(logMessage);
 
     const sessions = await this.sessionRepository.find({
       where: { userId },
@@ -34,8 +35,8 @@ export class ChatService {
   }
 
   public async createSession(title: string, userId: string, headers: IRequestHeaders) {
-    // const logMessage = constructLogMessage(__filename, 'createSession', headers);
-    // this.log.info(logMessage); // Temporarily commented for testing
+    const logMessage = constructLogMessage(__filename, 'createSession', headers);
+    this.log.info(logMessage);
 
     const session = this.sessionRepository.create({
       title: !title || title.trim() === '' ? 'New chat' : title,
@@ -179,13 +180,18 @@ export class ChatService {
 
       const savedMessage = await this.messageRepository.save(message);
 
+      // Fetch the saved message to trigger @AfterLoad (decryption) hook
+      const decryptedMessage = await this.messageRepository.findOne({
+        where: { id: savedMessage.id }
+      });
+
       // Update session's lastMessageAt timestamp
       await this.sessionRepository.update(
         { id: sessionId },
         { lastMessageAt: new Date() }
       );
 
-      return savedMessage.toJSON();
+      return decryptedMessage?.toJSON() || savedMessage.toJSON();
     } catch (error) {
       // If it's already a CredError, re-throw it
       if (error instanceof CredError || (error as any).httpCode) {
@@ -199,7 +205,7 @@ export class ChatService {
     }
   }
 
-  public async getMessages(sessionId: string, page: number, limit: number, userId: string, headers: IRequestHeaders) {
+  public async getMessages(sessionId: string, limit: number, skip: number, userId: string, headers: IRequestHeaders) {
     // const logMessage = constructLogMessage(__filename, 'getMessages', headers);
     // this.log.info(logMessage); // Temporarily commented for testing
 
@@ -214,27 +220,31 @@ export class ChatService {
         throw new CredError(HTTPCODES.NOT_FOUND, CODES.NotFound);
       }
 
-      const skip = (page - 1) * limit;
       const [messages, total] = await this.messageRepository.findAndCount({
         where: { sessionId },
         order: { createdAt: 'DESC' },
-        skip,
-        take: limit
+        skip: skip || 0,
+        take: limit || 50
       });
 
-      const processedMessages = await Promise.all(
-        messages.map(async (message) => {
-          const messageData = message.toJSON();
-          // Decryption is handled by entity hooks
-          return messageData;
-        })
-      );
+      const processedMessages = messages.map((message) => {
+        // Return message data with automatic encryption/decryption handled by entity hooks
+        return {
+          id: message.id,
+          sessionId: message.sessionId,
+          sender: message.sender,
+          content: message.content,
+          context: message.context || undefined, // Convert null to undefined for consistency
+          createdAt: message.createdAt,
+          updatedAt: message.updatedAt
+        };
+      });
 
       return {
-        messages: processedMessages.reverse(), // Return in chronological order
+        messages: processedMessages, // Keep DESC order (newest first)
         total,
-        page,
-        pages: Math.ceil(total / limit)
+        page: Math.floor((skip || 0) / (limit || 50)) + 1,
+        pages: Math.ceil(total / (limit || 50))
       };
     } catch (error) {
       // If it's already a CredError, re-throw it
@@ -349,16 +359,20 @@ export class ChatService {
         await this.autoNameSession(sessionId, message);
       }
 
+      // Fetch the saved messages again to trigger @AfterLoad decryption hook
+      const decryptedUserMessage = await this.messageRepository.findOne({ where: { id: userMessageDoc.id } });
+      const decryptedAssistantMessage = await this.messageRepository.findOne({ where: { id: assistantMessageDoc.id } });
+
       return new SmartChatResponseDto(
         {
-          id: userMessageDoc.id,
-          content: userMessageDoc.content,
-          timestamp: userMessageDoc.createdAt
+          id: decryptedUserMessage!.id,
+          content: decryptedUserMessage!.content,
+          timestamp: decryptedUserMessage!.createdAt
         },
         {
-          id: assistantMessageDoc.id,
-          content: assistantMessageDoc.content,
-          timestamp: assistantMessageDoc.createdAt
+          id: decryptedAssistantMessage!.id,
+          content: decryptedAssistantMessage!.content,
+          timestamp: decryptedAssistantMessage!.createdAt
         },
         {
           prompt: aiResponse.tokensUsed.prompt,

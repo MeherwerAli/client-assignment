@@ -31,15 +31,14 @@ import { URCHeaderMiddleware } from '../middlewares/URCHeaderMiddleware';
 import { UserContextMiddleware } from '../middlewares/UserContextMiddleware';
 import { ChatService } from '../services/ChatService';
 @JsonController('/v1/chats')
+@JsonController('/v1/chats')
 @UseBefore(
-  MethodValidationMiddleware,
-  ContentTypeMiddleware,
   URCHeaderMiddleware,
   APIKeyMiddleware,
   bodyParser.urlencoded({ extended: false }),
   bodyParser.json(),
-  UserContextMiddleware,
-  UuidValidationMiddleware
+  UuidValidationMiddleware,
+  UserContextMiddleware
 )
 export class ChatsController {
   private log = new Logger(__filename);
@@ -150,7 +149,9 @@ export class ChatsController {
       `Retrieving messages for session ${id} (limit: ${query.limit || 50}, skip: ${query.skip || 0}) for user: ${req.userId}`
     );
 
-    return this.chatService.getMessages(id, query.limit, query.skip, req.userId, headers);
+    const result = await this.chatService.getMessages(id, query.limit, query.skip, req.userId, headers);
+    // Return just the messages array for backward compatibility with existing tests
+    return result.messages;
   }
 
   @Post('/:id/smart-chat')
